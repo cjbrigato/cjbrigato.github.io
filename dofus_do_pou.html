@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Calculateur de Dommages - Dofus</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      h1,
+      h2 {
+        margin-bottom: 0.5em;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .params {
+        margin-bottom: 20px;
+      }
+      .params h2 {
+        margin-bottom: 10px;
+      }
+
+      /* Mise en forme en grille / flex des paramètres */
+      .params-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+      .param-box {
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        min-width: 180px;
+      }
+      .param-box label {
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .param-box input {
+        padding: 5px;
+      }
+
+      /* Bouton "Calculer" */
+      .btn-calc {
+        margin-top: 10px;
+        padding: 10px 16px;
+        border: none;
+        background: #337ab7;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+      }
+      .btn-calc:hover {
+        background: #286090;
+      }
+
+      /* Zone des résultats */
+      .results h2 {
+        margin-bottom: 10px;
+      }
+
+      /* Bouton pour afficher/masquer le tableau */
+      .toggle-table-btn {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        background: #5cb85c;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .toggle-table-btn:hover {
+        background: #4cae4c;
+      }
+
+      /* Tableau de résultats, caché par défaut */
+      .hidden {
+        display: none;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      table thead {
+        background-color: #eee;
+      }
+      table th,
+      table td {
+        padding: 8px;
+        border: 1px solid #ccc;
+        text-align: center;
+      }
+
+      /* Conteneur plus grand pour le graphique */
+      .chart-container {
+        position: relative; /* important pour Chart.js en mode responsive */
+        width: 100%;
+        height: 500px; /* on fixe une hauteur de 500px */
+        max-width: 900px; /* limite la largeur max du graphique */
+        margin: 0 auto; /* centre horizontalement */
+        background: #fafafa;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px;
+      }
+
+      /* Responsive: sur petits écrans, on ajuste le layout */
+      @media (max-width: 600px) {
+        .param-box {
+          min-width: 130px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Calculateur de Dommages - Dofus</h1>
+
+      <!-- Paramètres -->
+      <div class="params">
+        <h2>Paramètres</h2>
+        <div class="params-grid">
+          <div class="param-box">
+            <label for="puissance">Puissance</label>
+            <input type="number" id="puissance" value="100" />
+          </div>
+          <div class="param-box">
+            <label for="carac">Carac (Force, etc.)</label>
+            <input type="number" id="carac" value="75" />
+          </div>
+          <div class="param-box">
+            <label for="niveau">Niveau</label>
+            <input type="number" id="niveau" value="100" />
+          </div>
+          <div class="param-box">
+            <label for="doPou">Do Poussée</label>
+            <input type="number" id="doPou" value="10" />
+          </div>
+          <div class="param-box">
+            <label for="doFixGlobal">Do fixes (globaux)</label>
+            <input type="number" id="doFixGlobal" value="10" />
+          </div>
+          <div class="param-box">
+            <label for="doFixCarac">Do Fix Carac</label>
+            <input type="number" id="doFixCarac" value="0" />
+          </div>
+          <div class="param-box">
+            <label for="bonusCarac">Bonus Carac</label>
+            <input type="number" id="bonusCarac" value="50" />
+          </div>
+          <div class="param-box">
+            <label for="bonusDoFix">Bonus Do Fix</label>
+            <input type="number" id="bonusDoFix" value="15" />
+          </div>
+          <div class="param-box">
+            <label for="bonusDoPou">Bonus Do Pou</label>
+            <input type="number" id="bonusDoPou" value="20" />
+          </div>
+          <div class="param-box">
+            <label for="nbCasePoussee">Cases poussées</label>
+            <input type="number" id="nbCasePoussee" value="2" />
+          </div>
+          <div class="param-box">
+            <label for="rePou">Ré Pou (cible)</label>
+            <input type="number" id="rePou" value="0" />
+          </div>
+        </div>
+        <button class="btn-calc" onclick="calculer()">Calculer</button>
+      </div>
+
+      <!-- Graphique de comparaison -->
+      <div class="results">
+        <h2>Graphique de comparaison</h2>
+        <div class="chart-container">
+          <canvas id="myChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Bouton pour afficher/masquer le tableau + Tableau (replié par défaut) -->
+      <button class="toggle-table-btn" onclick="toggleTable()">
+        Afficher le tableau de résultats
+      </button>
+      <div id="tableContainer" class="hidden">
+        <table id="resultTable">
+          <thead>
+            <tr>
+              <th>Dégâts de base</th>
+              <th>Avec Bonus Carac</th>
+              <th>Avec Bonus Do Fix</th>
+              <th>Avec Bonus Do Pou</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      /* Liste des dégâts de base (extraits du fichier Excel) de 0 à 54 par pas de 2 */
+      const baseValues = [
+        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36,
+        38, 40, 42, 44, 46, 48, 50, 52, 54,
+      ]
+
+      let chartInstance = null
+
+      /* Toggle du tableau (afficher/masquer) */
+      function toggleTable() {
+        const tableDiv = document.getElementById("tableContainer")
+        if (tableDiv.classList.contains("hidden")) {
+          tableDiv.classList.remove("hidden")
+          document.querySelector(".toggle-table-btn").innerText =
+            "Masquer le tableau de résultats"
+        } else {
+          tableDiv.classList.add("hidden")
+          document.querySelector(".toggle-table-btn").innerText =
+            "Afficher le tableau de résultats"
+        }
+      }
+
+      /* Fonction principale de calcul */
+      function calculer() {
+        const puissance =
+          parseFloat(document.getElementById("puissance").value) || 0
+        const carac = parseFloat(document.getElementById("carac").value) || 0
+        const niveau = parseFloat(document.getElementById("niveau").value) || 1
+        const doPou = parseFloat(document.getElementById("doPou").value) || 0
+        const doFixGlobal =
+          parseFloat(document.getElementById("doFixGlobal").value) || 0
+        const doFixCarac =
+          parseFloat(document.getElementById("doFixCarac").value) || 0
+
+        const bonusCarac =
+          parseFloat(document.getElementById("bonusCarac").value) || 0
+        const bonusDoFix =
+          parseFloat(document.getElementById("bonusDoFix").value) || 0
+        const bonusDoPou =
+          parseFloat(document.getElementById("bonusDoPou").value) || 0
+
+        const nbCasePoussee =
+          parseFloat(document.getElementById("nbCasePoussee").value) || 0
+        const rePou = parseFloat(document.getElementById("rePou").value) || 0
+
+        /* On vide le tableau HTML */
+        const tbody = document.querySelector("#resultTable tbody")
+        tbody.innerHTML = ""
+
+        /* Prépare les listes pour le graphique */
+        const labels = []
+        const dataCarac = []
+        const dataDoFix = []
+        const dataDoPou = []
+
+        baseValues.forEach((base) => {
+          // Dommages de poussée standard (sans bonus do pou)
+          const dmgPoussée =
+            ((niveau / 2 + doPou - rePou + 32) * nbCasePoussee) / 4
+
+          /* Scénario 1 : Avec Bonus Carac */
+          const sc1 =
+            base * (1 + (carac + puissance + bonusCarac) / 100) +
+            (doFixGlobal + doFixCarac) +
+            dmgPoussée
+
+          /* Scénario 2 : Avec Bonus Do Fix */
+          const sc2 =
+            base * (1 + (carac + puissance) / 100) +
+            (doFixGlobal + doFixCarac + bonusDoFix) +
+            dmgPoussée
+
+          /* Scénario 3 : Avec Bonus Do Pou (ajouté dans la partie poussée) */
+          const dmgPousséeSc3 =
+            ((niveau / 2 + doPou + bonusDoPou - rePou + 32) * nbCasePoussee) / 4
+          const sc3 =
+            base * (1 + (carac + puissance) / 100) +
+            (doFixGlobal + doFixCarac) +
+            dmgPousséeSc3
+
+          // On arrondit
+          const val1 = sc1.toFixed(1)
+          const val2 = sc2.toFixed(1)
+          const val3 = sc3.toFixed(1)
+
+          // Remplir le tableau
+          const row = document.createElement("tr")
+          row.innerHTML = `
+      <td>${base}</td>
+      <td>${val1}</td>
+      <td>${val2}</td>
+      <td>${val3}</td>
+    `
+          tbody.appendChild(row)
+
+          // Données pour le graphique
+          labels.push(base)
+          dataCarac.push(parseFloat(val1))
+          dataDoFix.push(parseFloat(val2))
+          dataDoPou.push(parseFloat(val3))
+        })
+
+        // Mettre à jour le graphique
+        majGraphique(labels, dataCarac, dataDoFix, dataDoPou)
+      }
+
+      /* Mise à jour du graphique Chart.js */
+      function majGraphique(labels, dataCarac, dataFix, dataPou) {
+        const ctx = document.getElementById("myChart").getContext("2d")
+        if (chartInstance) {
+          chartInstance.destroy()
+        }
+        chartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              { label: "Avec Bonus Carac", data: dataCarac },
+              { label: "Avec Bonus Do Fix", data: dataFix },
+              { label: "Avec Bonus Do Pou", data: dataPou },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false, // permet d'utiliser la hauteur fixée par .chart-container
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Dégâts de base",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Dommages calculés",
+                },
+              },
+            },
+          },
+        })
+      }
+
+      /* Calcul initial au chargement (le tableau reste caché tant qu'on ne clique pas sur le bouton) */
+      window.onload = calculer
+    </script>
+  </body>
+</html>
