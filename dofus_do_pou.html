@@ -3,15 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>Calculateur de Dommages - Dofus</title>
-
     <style>
       body {
         font-family: Arial, sans-serif;
         margin: 20px;
         background-color: #f5f5f5;
       }
-      h1,
-      h2 {
+      h1, h2, h3 {
         margin-bottom: 0.5em;
       }
       .container {
@@ -22,15 +20,30 @@
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-
+      /* Boutons de toggle pour les sections */
+      .toggle-section-btn {
+        margin-bottom: 10px;
+        padding: 6px 12px;
+        background: #5bc0de;
+        border: none;
+        border-radius: 4px;
+        color: #fff;
+        cursor: pointer;
+      }
+      .toggle-section-btn:hover {
+        background: #46b8da;
+      }
+      /* Conteneur des Paramètres */
+      #paramsContainer {
+        /* Par défaut, visible */
+        display: block;
+      }
       .params {
         margin-bottom: 20px;
       }
       .params h2 {
         margin-bottom: 10px;
       }
-
-      /* Mise en forme en grille / flex des paramètres */
       .params-grid {
         display: flex;
         flex-wrap: wrap;
@@ -52,42 +65,41 @@
       .param-box input {
         padding: 5px;
       }
-
-      /* Bouton "Calculer" */
-      .btn-calc {
+      /* Boutons */
+      .btn-row {
         margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      button {
         padding: 10px 16px;
         border: none;
-        background: #337ab7;
-        color: #fff;
         cursor: pointer;
         font-size: 14px;
         border-radius: 5px;
+        color: #fff;
+      }
+      .btn-calc {
+        background: #337ab7;
       }
       .btn-calc:hover {
         background: #286090;
       }
-
-      /* Zone des résultats */
-      .results h2 {
-        margin-bottom: 10px;
+      .btn-reset {
+        background: #d9534f;
       }
-
+      .btn-reset:hover {
+        background: #c9302c;
+      }
       /* Bouton pour afficher/masquer le tableau */
       .toggle-table-btn {
         margin-bottom: 10px;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 5px;
         background: #5cb85c;
-        color: #fff;
-        cursor: pointer;
-        font-size: 14px;
       }
       .toggle-table-btn:hover {
         background: #4cae4c;
       }
-
       /* Tableau de résultats, caché par défaut */
       .hidden {
         display: none;
@@ -100,32 +112,58 @@
       table thead {
         background-color: #eee;
       }
-      table th,
-      table td {
+      table th, table td {
         padding: 8px;
         border: 1px solid #ccc;
         text-align: center;
       }
-
-      /* Conteneur plus grand pour le graphique */
+      /* Conteneur du graphique */
       .chart-container {
-        position: relative; /* important pour Chart.js en mode responsive */
+        position: relative;
         width: 100%;
-        height: 500px; /* on fixe une hauteur de 500px */
-        max-width: 900px; /* limite la largeur max du graphique */
-        margin: 0 auto; /* centre horizontalement */
+        height: 500px;
+        max-width: 900px;
+        margin: 0 auto;
         background: #fafafa;
         border: 1px solid #ccc;
         border-radius: 6px;
         padding: 10px;
       }
-
-      /* Case à cocher pour l'échelle */
-      .scale-choice {
+      /* Section Sauvegarde pliable */
+      #saveContainer {
+        display: none;
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .save-container input[type="text"] {
+        padding: 5px;
+        width: 200px;
+      }
+      .save-container button {
+        padding: 6px 10px;
+        font-size: 13px;
+        border-radius: 4px;
+        margin-left: 5px;
+      }
+      .save-list {
         margin-top: 10px;
       }
-
-      /* Responsive: sur petits écrans, on ajuste le layout */
+      .save-list ul {
+        list-style: none;
+        padding: 0;
+      }
+      .save-list li {
+        margin-bottom: 5px;
+      }
+      .save-list button {
+        padding: 3px 6px;
+        font-size: 12px;
+        margin-left: 5px;
+      }
+      /* Responsive */
       @media (max-width: 600px) {
         .param-box {
           min-width: 130px;
@@ -136,66 +174,90 @@
   <body>
     <div class="container">
       <h1>Calculateur de Dommages - Dofus</h1>
-      <i>sur une idée de <strong>Poutre</strong></i>
-      <hr />
 
-      <!-- Paramètres -->
-      <div class="params">
-        <h2>Paramètres</h2>
-        <div class="params-grid">
-          <div class="param-box">
-            <label for="puissance">Puissance</label>
-            <input type="number" id="puissance" value="100" />
+      <!-- Bouton de toggle pour les Paramètres -->
+      <button class="toggle-section-btn" onclick="toggleSection('paramsContainer', this)">
+        Masquer Paramètres
+      </button>
+      <div id="paramsContainer">
+        <div class="params">
+          <h2>Paramètres</h2>
+          <div class="params-grid">
+            <!-- Tous les inputs avec onchange pour sauvegarder -->
+            <div class="param-box">
+              <label for="puissance">Puissance</label>
+              <input type="number" id="puissance" value="100" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="carac">Carac (Force, etc.)</label>
+              <input type="number" id="carac" value="75" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="niveau">Niveau</label>
+              <input type="number" id="niveau" value="100" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="doPou">Do Poussée</label>
+              <input type="number" id="doPou" value="10" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="doFixGlobal">Do fixes (globaux)</label>
+              <input type="number" id="doFixGlobal" value="10" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="doFixCarac">Do Fix Carac</label>
+              <input type="number" id="doFixCarac" value="0" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="bonusCarac">Bonus Carac</label>
+              <input type="number" id="bonusCarac" value="50" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="bonusDoFix">Bonus Do Fix</label>
+              <input type="number" id="bonusDoFix" value="15" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="bonusDoPou">Bonus Do Pou</label>
+              <input type="number" id="bonusDoPou" value="20" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="nbCasePoussee">Cases poussées</label>
+              <input type="number" id="nbCasePoussee" value="2" onchange="saveParams()" />
+            </div>
+            <div class="param-box">
+              <label for="rePou">Ré Pou (cible)</label>
+              <input type="number" id="rePou" value="0" onchange="saveParams()" />
+            </div>
           </div>
-          <div class="param-box">
-            <label for="carac">Carac (Force, etc.)</label>
-            <input type="number" id="carac" value="75" />
+          <!-- Boutons Calculer + Reset -->
+          <div class="btn-row">
+            <button class="btn-calc" onclick="calculer()">Calculer</button>
+            <button class="btn-reset" onclick="resetToDefaults()">Reset (valeurs par défaut)</button>
           </div>
-          <div class="param-box">
-            <label for="niveau">Niveau</label>
-            <input type="number" id="niveau" value="100" />
-          </div>
-          <div class="param-box">
-            <label for="doPou">Do Poussée</label>
-            <input type="number" id="doPou" value="10" />
-          </div>
-          <div class="param-box">
-            <label for="doFixGlobal">Do fixes (globaux)</label>
-            <input type="number" id="doFixGlobal" value="10" />
-          </div>
-          <div class="param-box">
-            <label for="doFixCarac">Do Fix Carac</label>
-            <input type="number" id="doFixCarac" value="0" />
-          </div>
-          <div class="param-box">
-            <label for="bonusCarac">Bonus Carac</label>
-            <input type="number" id="bonusCarac" value="50" />
-          </div>
-          <div class="param-box">
-            <label for="bonusDoFix">Bonus Do Fix</label>
-            <input type="number" id="bonusDoFix" value="15" />
-          </div>
-          <div class="param-box">
-            <label for="bonusDoPou">Bonus Do Pou</label>
-            <input type="number" id="bonusDoPou" value="20" />
-          </div>
-          <div class="param-box">
-            <label for="nbCasePoussee">Cases poussées</label>
-            <input type="number" id="nbCasePoussee" value="2" />
-          </div>
-          <div class="param-box">
-            <label for="rePou">Ré Pou (cible)</label>
-            <input type="number" id="rePou" value="0" />
+          <!-- Case à cocher pour l'échelle -->
+          <div class="scale-choice">
+            <label>
+              <input type="checkbox" id="toggleLog" onchange="onScaleChange()" />
+              Échelle logarithmique
+            </label>
           </div>
         </div>
-        <button class="btn-calc" onclick="calculer()">Calculer</button>
+      </div>
 
-        <!-- Case à cocher pour l'échelle (lin/log) -->
-        <div class="scale-choice">
-          <label>
-            <input type="checkbox" id="toggleLog" onchange="onScaleChange()" />
-            Échelle logarithmique
-          </label>
+      <!-- Bouton de toggle pour la section Sauvegarde -->
+      <button class="toggle-section-btn" onclick="toggleSection('saveContainer', this)">
+        Afficher Sauvegardes
+      </button>
+      <div id="saveContainer">
+        <div class="save-container">
+          <h2>Sauvegarde de configuration</h2>
+          <input type="text" id="saveName" placeholder="Nom de la sauvegarde" />
+          <button onclick="saveConfig()">Sauvegarder</button>
+          <button onclick="clearAllConfigs()">Tout effacer</button>
+          <div class="save-list">
+            <h3>Sauvegardes existantes :</h3>
+            <ul id="savedConfigs"></ul>
+          </div>
         </div>
       </div>
 
@@ -207,7 +269,7 @@
         </div>
       </div>
 
-      <!-- Bouton pour afficher/masquer le tableau + Tableau (replié par défaut) -->
+      <!-- Bouton pour afficher/masquer le tableau de résultats -->
       <button class="toggle-table-btn" onclick="toggleTable()">
         Afficher le tableau de résultats
       </button>
@@ -229,233 +291,312 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-      /* Liste des dégâts de base de 0 à 54 (pas de 2) */
-      const baseValues = [
-        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36,
-        38, 40, 42, 44, 46, 48, 50, 52, 54,
-      ]
+      /**************************************
+       *   PARAMÈTRES PAR DÉFAUT & BASE
+       **************************************/
+      const defaultParams = {
+        puissance: 100,
+        carac: 75,
+        niveau: 100,
+        doPou: 10,
+        doFixGlobal: 10,
+        doFixCarac: 0,
+        bonusCarac: 50,
+        bonusDoFix: 15,
+        bonusDoPou: 20,
+        nbCasePoussee: 2,
+        rePou: 0,
+        toggleLog: false
+      };
 
-      let chartInstance = null
-      let currentScaleType = "linear" // on commence en échelle linéaire
+      const baseValues = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54];
 
-      /* Toggle du tableau (afficher/masquer) */
-      function toggleTable() {
-        const tableDiv = document.getElementById("tableContainer")
-        if (tableDiv.classList.contains("hidden")) {
-          tableDiv.classList.remove("hidden")
-          document.querySelector(".toggle-table-btn").innerText =
-            "Masquer le tableau de résultats"
+      let chartInstance = null;
+      let currentScaleType = "linear";
+
+      /**************************************
+       *       LOCAL STORAGE POUR PARAMS
+       **************************************/
+      const STORAGE_KEY = "dofusCalcParams";
+
+      function saveParams() {
+        const p = getParamsFromInputs();
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+        } catch (e) {
+          console.warn("Erreur localStorage:", e);
+        }
+      }
+
+      function loadParamsFromStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+        try {
+          const p = JSON.parse(saved);
+          setInputsFromParams(p);
+        } catch (e) {
+          console.warn("Erreur parsing localStorage:", e);
+        }
+      }
+
+      function resetToDefaults() {
+        // Réinitialise uniquement les inputs aux valeurs par défaut
+        setInputsFromParams(defaultParams);
+        saveParams();
+        calculer();
+      }
+
+      /**************************************
+       *        GESTION DES INPUTS
+       **************************************/
+      function getParamsFromInputs() {
+        return {
+          puissance: parseFloat(document.getElementById("puissance").value) || 0,
+          carac: parseFloat(document.getElementById("carac").value) || 0,
+          niveau: parseFloat(document.getElementById("niveau").value) || 1,
+          doPou: parseFloat(document.getElementById("doPou").value) || 0,
+          doFixGlobal: parseFloat(document.getElementById("doFixGlobal").value) || 0,
+          doFixCarac: parseFloat(document.getElementById("doFixCarac").value) || 0,
+          bonusCarac: parseFloat(document.getElementById("bonusCarac").value) || 0,
+          bonusDoFix: parseFloat(document.getElementById("bonusDoFix").value) || 0,
+          bonusDoPou: parseFloat(document.getElementById("bonusDoPou").value) || 0,
+          nbCasePoussee: parseFloat(document.getElementById("nbCasePoussee").value) || 0,
+          rePou: parseFloat(document.getElementById("rePou").value) || 0,
+          toggleLog: document.getElementById("toggleLog").checked
+        };
+      }
+
+      function setInputsFromParams(p) {
+        document.getElementById("puissance").value = p.puissance;
+        document.getElementById("carac").value = p.carac;
+        document.getElementById("niveau").value = p.niveau;
+        document.getElementById("doPou").value = p.doPou;
+        document.getElementById("doFixGlobal").value = p.doFixGlobal;
+        document.getElementById("doFixCarac").value = p.doFixCarac;
+        document.getElementById("bonusCarac").value = p.bonusCarac;
+        document.getElementById("bonusDoFix").value = p.bonusDoFix;
+        document.getElementById("bonusDoPou").value = p.bonusDoPou;
+        document.getElementById("nbCasePoussee").value = p.nbCasePoussee;
+        document.getElementById("rePou").value = p.rePou;
+        document.getElementById("toggleLog").checked = !!p.toggleLog;
+      }
+
+      /**************************************
+       *         TOGGLE DES SECTIONS
+       **************************************/
+      function toggleSection(id, btn) {
+        const section = document.getElementById(id);
+        if (section.style.display === "none" || section.style.display === "") {
+          section.style.display = "block";
+          btn.innerText = (id === "paramsContainer") ? "Masquer Paramètres" : "Masquer Sauvegardes";
         } else {
-          tableDiv.classList.add("hidden")
-          document.querySelector(".toggle-table-btn").innerText =
-            "Afficher le tableau de résultats"
+          section.style.display = "none";
+          btn.innerText = (id === "paramsContainer") ? "Afficher Paramètres" : "Afficher Sauvegardes";
         }
       }
 
-      /* Fonction appelée quand on coche/décoche la case "Échelle logarithmique" */
+      /**************************************
+       *         TOGGLE DU TABLEAU
+       **************************************/
+      function toggleTable() {
+        const tableDiv = document.getElementById("tableContainer");
+        if (tableDiv.classList.contains("hidden")) {
+          tableDiv.classList.remove("hidden");
+          document.querySelector(".toggle-table-btn").innerText = "Masquer le tableau de résultats";
+        } else {
+          tableDiv.classList.add("hidden");
+          document.querySelector(".toggle-table-btn").innerText = "Afficher le tableau de résultats";
+        }
+      }
+
+      /**************************************
+       *         ÉCHELLE (LIN / LOG)
+       **************************************/
       function onScaleChange() {
-        const isLog = document.getElementById("toggleLog").checked
-        currentScaleType = isLog ? "logarithmic" : "linear"
-        // On met à jour l'échelle et on recalcule (ou on met juste à jour le chart)
+        const isLog = document.getElementById("toggleLog").checked;
+        currentScaleType = isLog ? "logarithmic" : "linear";
+        saveParams();
         if (chartInstance) {
-          updateScale()
+          updateScale();
         }
       }
 
-      /* Fonction principale de calcul */
+      /**************************************
+       *   FONCTION PRINCIPALE : CALCUL
+       **************************************/
       function calculer() {
-        const puissance =
-          parseFloat(document.getElementById("puissance").value) || 0
-        const carac = parseFloat(document.getElementById("carac").value) || 0
-        const niveau = parseFloat(document.getElementById("niveau").value) || 1
-        const doPou = parseFloat(document.getElementById("doPou").value) || 0
-        const doFixGlobal =
-          parseFloat(document.getElementById("doFixGlobal").value) || 0
-        const doFixCarac =
-          parseFloat(document.getElementById("doFixCarac").value) || 0
-
-        const bonusCarac =
-          parseFloat(document.getElementById("bonusCarac").value) || 0
-        const bonusDoFix =
-          parseFloat(document.getElementById("bonusDoFix").value) || 0
-        const bonusDoPou =
-          parseFloat(document.getElementById("bonusDoPou").value) || 0
-
-        const nbCasePoussee =
-          parseFloat(document.getElementById("nbCasePoussee").value) || 0
-        const rePou = parseFloat(document.getElementById("rePou").value) || 0
-
-        /* On vide le tableau HTML */
-        const tbody = document.querySelector("#resultTable tbody")
-        tbody.innerHTML = ""
-
-        /* Prépare les listes pour le graphique */
-        const labels = []
-        const dataCarac = []
-        const dataDoFix = []
-        const dataDoPou = []
+        const p = getParamsFromInputs();
+        currentScaleType = p.toggleLog ? "logarithmic" : "linear";
+        const tbody = document.querySelector("#resultTable tbody");
+        tbody.innerHTML = "";
+        const labels = [];
+        const dataCarac = [];
+        const dataDoFix = [];
+        const dataDoPou = [];
 
         baseValues.forEach((base) => {
-          // Dommages de poussée standard (sans bonus do pou)
-          const dmgPoussée =
-            ((niveau / 2 + doPou - rePou + 32) * nbCasePoussee) / 4
-
-          /* Scénario 1 : Avec Bonus Carac */
-          const sc1 =
-            base * (1 + (carac + puissance + bonusCarac) / 100) +
-            (doFixGlobal + doFixCarac) +
-            dmgPoussée
-
-          /* Scénario 2 : Avec Bonus Do Fix */
-          const sc2 =
-            base * (1 + (carac + puissance) / 100) +
-            (doFixGlobal + doFixCarac + bonusDoFix) +
-            dmgPoussée
-
-          /* Scénario 3 : Avec Bonus Do Pou (ajouté dans la partie poussée) */
-          const dmgPousséeSc3 =
-            ((niveau / 2 + doPou + bonusDoPou - rePou + 32) * nbCasePoussee) / 4
-          const sc3 =
-            base * (1 + (carac + puissance) / 100) +
-            (doFixGlobal + doFixCarac) +
-            dmgPousséeSc3
-
-          // On arrondit
-          const val1 = sc1.toFixed(1)
-          const val2 = sc2.toFixed(1)
-          const val3 = sc3.toFixed(1)
-
-          // Remplir le tableau
-          const row = document.createElement("tr")
+          const dmgPoussée = ((p.niveau / 2 + p.doPou - p.rePou + 32) * p.nbCasePoussee) / 4;
+          const sc1 = base * (1 + (p.carac + p.puissance + p.bonusCarac) / 100)
+                    + (p.doFixGlobal + p.doFixCarac)
+                    + dmgPoussée;
+          const sc2 = base * (1 + (p.carac + p.puissance) / 100)
+                    + (p.doFixGlobal + p.doFixCarac + p.bonusDoFix)
+                    + dmgPoussée;
+          const dmgPousséeSc3 = ((p.niveau / 2 + p.doPou + p.bonusDoPou - p.rePou + 32) * p.nbCasePoussee) / 4;
+          const sc3 = base * (1 + (p.carac + p.puissance) / 100)
+                    + (p.doFixGlobal + p.doFixCarac)
+                    + dmgPousséeSc3;
+          const val1 = sc1.toFixed(1);
+          const val2 = sc2.toFixed(1);
+          const val3 = sc3.toFixed(1);
+          const row = document.createElement("tr");
           row.innerHTML = `
-      <td>${base}</td>
-      <td>${val1}</td>
-      <td>${val2}</td>
-      <td>${val3}</td>
-    `
-          tbody.appendChild(row)
+            <td>${base}</td>
+            <td>${val1}</td>
+            <td>${val2}</td>
+            <td>${val3}</td>
+          `;
+          tbody.appendChild(row);
+          labels.push(base);
+          dataCarac.push(parseFloat(val1));
+          dataDoFix.push(parseFloat(val2));
+          dataDoPou.push(parseFloat(val3));
+        });
 
-          // Données pour le graphique
-          labels.push(base)
-          dataCarac.push(parseFloat(val1))
-          dataDoFix.push(parseFloat(val2))
-          dataDoPou.push(parseFloat(val3))
-        })
-
-        // Crée (ou recrée) le graphique
-        majGraphique(labels, dataCarac, dataDoFix, dataDoPou)
+        majGraphique(labels, dataCarac, dataDoFix, dataDoPou);
       }
 
-      /* Création / Mise à jour du graphique Chart.js */
+      /**************************************
+       *   CREATION / MISE À JOUR DU CHART
+       **************************************/
       function majGraphique(labels, dataCarac, dataFix, dataPou) {
-        const ctx = document.getElementById("myChart").getContext("2d")
-
-        // Si un ancien graphique existe, on le détruit
+        const ctx = document.getElementById("myChart").getContext("2d");
         if (chartInstance) {
-          chartInstance.destroy()
+          chartInstance.destroy();
         }
-
         chartInstance = new Chart(ctx, {
           type: "line",
           data: {
             labels: labels,
             datasets: [
-              {
-                label: "Avec Bonus Carac",
-                data: dataCarac,
-                tension: 0.3,
-              },
-              {
-                label: "Avec Bonus Do Fix",
-                data: dataFix,
-                tension: 0.3,
-              },
-              {
-                label: "Avec Bonus Do Pou",
-                data: dataPou,
-                tension: 0.3,
-              },
-            ],
+              { label: "Avec Bonus Carac", data: dataCarac, tension: 0.3 },
+              { label: "Avec Bonus Do Fix", data: dataFix, tension: 0.3 },
+              { label: "Avec Bonus Do Pou", data: dataPou, tension: 0.3 }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
               x: {
-                title: {
-                  display: true,
-                  text: "Dégâts de base",
-                },
+                title: { display: true, text: "Dégâts de base" }
               },
               y: {
-                // Au départ, on met un placeholder, on actualisera via updateScale()
-                type: currentScaleType,
-              },
-            },
-          },
-        })
-
-        // On stocke les data brutes dans l'instance du chart pour y accéder dans updateScale()
-        chartInstance._allVals = [...dataCarac, ...dataFix, ...dataPou]
-
-        // Ajuste l'échelle (min/max) maintenant qu'on a le chart
-        updateScale()
+                type: currentScaleType
+              }
+            }
+          }
+        });
+        chartInstance._allVals = [...dataCarac, ...dataFix, ...dataPou];
+        updateScale();
       }
 
-      /* Ajuste l'échelle (min, max) en fonction de la case log/lin et des datas calculées */
       function updateScale() {
-        if (!chartInstance) return
-
-        const isLog = currentScaleType === "logarithmic"
-        const allVals = chartInstance._allVals || []
-        if (!allVals.length) return
-
-        // On calcule min et max
-        let dataMax = Math.max(...allVals)
-        let dataMin = Math.min(...allVals)
-
-        // Si tout est <= 0, c'est un cas extrême, on force des valeurs arbitraires
-        if (dataMax <= 0) dataMax = 1
-
-        // On ajoute une marge haute : +10%
-        dataMax *= 1.1
-
+        if (!chartInstance) return;
+        const isLog = currentScaleType === "logarithmic";
+        const allVals = chartInstance._allVals || [];
+        if (!allVals.length) return;
+        let dataMax = Math.max(...allVals);
+        let dataMin = Math.min(...allVals);
+        if (dataMax <= 0) dataMax = 1;
+        dataMax *= 1.1;
         if (isLog) {
-          // Echelle log => impossible d'aller en-dessous de 1,
-          // sauf si on a des valeurs <1, on peut éventuellement descendre à 0.1
-          // Par simplicité, on impose un min = 1 si dataMin < 1
-          let logMin = Math.min(dataMin, 1)
-          if (logMin < 1 && logMin > 0) {
-            // s'il y a des valeurs entre 0 et 1, on autorise 0.1
-            logMin = 0.1
-          }
-          if (dataMin <= 0) {
-            // Si on a du 0 ou négatif => la log n'aime pas => on met 0.1
-            logMin = 0.1
-          }
-          chartInstance.options.scales.y.type = "logarithmic"
-          chartInstance.options.scales.y.min = logMin
-          chartInstance.options.scales.y.max = dataMax
-          chartInstance.options.scales.y.beginAtZero = false
-          chartInstance.options.scales.y.title.text = "Dommages (log)"
+          let logMin = dataMin <= 0 ? 0.1 : (dataMin < 1 ? 0.1 : dataMin);
+          chartInstance.options.scales.y.type = "logarithmic";
+          chartInstance.options.scales.y.min = logMin;
+          chartInstance.options.scales.y.max = dataMax;
+          chartInstance.options.scales.y.beginAtZero = false;
+          chartInstance.options.scales.y.title = { text: "Dommages (log)" };
         } else {
-          // Echelle linéaire
-          // On peut décider de partir de 0 si dataMin > 0, ou de dataMin * 0.9 pour avoir une marge
-          let linMin = Math.min(0, dataMin * 0.9)
-          // Max = dataMax
-          chartInstance.options.scales.y.type = "linear"
-          chartInstance.options.scales.y.min = linMin
-          chartInstance.options.scales.y.max = dataMax
-          chartInstance.options.scales.y.beginAtZero = linMin >= 0
-          chartInstance.options.scales.y.title.text = "Dommages (lin)"
+          let linMin = Math.min(0, dataMin * 0.9);
+          chartInstance.options.scales.y.type = "linear";
+          chartInstance.options.scales.y.min = linMin;
+          chartInstance.options.scales.y.max = dataMax;
+          chartInstance.options.scales.y.beginAtZero = linMin >= 0;
+          chartInstance.options.scales.y.title = { text: "Dommages (lin)" };
         }
-
-        // Force la mise à jour
-        chartInstance.update()
+        chartInstance.update();
       }
 
-      /* Calcul initial au chargement (tableau caché) */
-      window.onload = calculer
+      /**************************************
+       *         GESTION DES SAUVEGARDES
+       **************************************/
+      const SAVE_STORAGE_KEY = "dofusCalcSavedConfigs";
+
+      function saveConfig() {
+        const name = document.getElementById("saveName").value.trim();
+        if (!name) return alert("Veuillez entrer un nom de sauvegarde.");
+        let configs = JSON.parse(localStorage.getItem(SAVE_STORAGE_KEY) || "{}");
+        if (configs[name] && !confirm("Une sauvegarde portant ce nom existe déjà. Voulez-vous l'écraser ?")) return;
+        configs[name] = getParamsFromInputs();
+        localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(configs));
+        loadConfigs();
+      }
+
+      // Nouveau : écraser une sauvegarde sans taper son nom (à partir de la liste)
+      function overwriteConfig(name) {
+        if (!confirm("Voulez-vous écraser la sauvegarde \"" + name + "\" avec la configuration actuelle ?")) return;
+        let configs = JSON.parse(localStorage.getItem(SAVE_STORAGE_KEY) || "{}");
+        configs[name] = getParamsFromInputs();
+        localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(configs));
+        loadConfigs();
+      }
+
+      function loadConfigs() {
+        const configs = JSON.parse(localStorage.getItem(SAVE_STORAGE_KEY) || "{}");
+        const list = document.getElementById("savedConfigs");
+        list.innerHTML = "";
+        Object.keys(configs).forEach(name => {
+          const li = document.createElement("li");
+          li.innerHTML = `${name}
+            <button onclick="loadConfig('${name}')">Charger</button>
+            <button onclick="overwriteConfig('${name}')">Écraser</button>
+            <button onclick="deleteConfig('${name}')">Supprimer</button>`;
+          list.appendChild(li);
+        });
+      }
+
+      function loadConfig(name) {
+        const configs = JSON.parse(localStorage.getItem(SAVE_STORAGE_KEY) || "{}");
+        if (!configs[name]) return;
+        setInputsFromParams(configs[name]);
+        saveParams();
+        calculer();
+      }
+
+      function deleteConfig(name) {
+        if (!confirm("Voulez-vous vraiment supprimer la sauvegarde \"" + name + "\" ?")) return;
+        let configs = JSON.parse(localStorage.getItem(SAVE_STORAGE_KEY) || "{}");
+        delete configs[name];
+        localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(configs));
+        loadConfigs();
+      }
+
+      function clearAllConfigs() {
+        if (confirm("Supprimer toutes les sauvegardes ?")) {
+          localStorage.removeItem(SAVE_STORAGE_KEY);
+          loadConfigs();
+        }
+      }
+
+      /**************************************
+       *         INITIALISATION
+       **************************************/
+      window.onload = function () {
+        loadParamsFromStorage();
+        calculer();
+        loadConfigs();
+      };
     </script>
   </body>
 </html>
